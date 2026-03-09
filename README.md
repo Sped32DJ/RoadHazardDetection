@@ -41,6 +41,12 @@ Follow these steps to run inference with the included `yolo.py` script.
 	```fish
 	python yolo.py ~/Downloads/video.mp4 --model runs/detect/train/weights/best.pt --show
 	```
+- **How I typically used it:**
+
+    ```fish
+    python yolo.py media/1348.mp4
+    ```
+    * This outputs into runs/detect/runs/detect/predict/1348.mp4
 
 Notes
 - If you are running on a headless Jetson Nano or other server, avoid `--show` and rely on saved outputs.
