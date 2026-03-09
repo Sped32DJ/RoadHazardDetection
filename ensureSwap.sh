@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 echo "Make sure to run as root!"
 
 # The swap file isn't persistent
