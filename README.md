@@ -19,6 +19,12 @@ Follow these steps to run inference with the included `yolo.py` script.
 
 - **Default model path:** The script defaults to `models/best.pt`. If you trained or placed your model elsewhere, pass it with `--model`.
 
+- **Training instructions:**
+ ``fish
+yolo detect train data=Pothole.v1-raw.yolov8/data.yaml epochs=100 imgsz=640
+```
+* This outputs the new model in runs/detect/train/weights
+
 - **Run the script (provide file argument):**
 	```fish
 	python yolo.py /path/to/image_or_video.mp4
