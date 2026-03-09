@@ -18,6 +18,9 @@ def parse_args():
 	p.add_argument('source', nargs='?', help='Path to image/video file. If omitted you will be prompted.')
 	p.add_argument('-m', '--model', default='models/best.pt', help='Path to YOLO model file (default: models/best.pt)')
 	p.add_argument('--show', action='store_true', help='Show results (opens image/window)')
+	p.add_argument('--no-save', action='store_true', help='Do not save annotated output files')
+	p.add_argument('--project', default='runs/detect', help='Output base directory (default: runs/detect)')
+	p.add_argument('--name', default='predict', help='Output run name/folder (default: predict)')
 	return p.parse_args()
 
 
@@ -77,8 +80,15 @@ def main():
 		sys.exit(2)
 
 	# Run inference
+	save_outputs = not args.no_save
 	try:
-		results = model(source)
+		results = model.predict(
+			source=source,
+			save=save_outputs,
+			project=args.project,
+			name=args.name,
+			exist_ok=True,
+		)
 	except Exception as e:
 		print(f'Error during inference: {e}', file=sys.stderr)
 		sys.exit(3)
@@ -86,19 +96,16 @@ def main():
 	# Print detections to stdout
 	print_detections(results, model)
 
-	# Show or save results
+	# Optionally display results in a window.
 	if args.show:
 		for r in results:
 			try:
 				r.show()
 			except Exception as e:
 				print(f'Unable to show result: {e}', file=sys.stderr)
-	else:
-		try:
-			results.save()  # saves to runs/detect/predict by default
-			print('Saved visualized results to runs/detect/predict')
-		except Exception as e:
-			print(f'Unable to save results: {e}', file=sys.stderr)
+
+	if save_outputs:
+		print(f'Saved visualized results to {args.project}/{args.name}')
 
 
 if __name__ == '__main__':
