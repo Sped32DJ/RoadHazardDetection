@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────
+#  RoadHazardDetection – configuration file
+# ─────────────────────────────────────────────
+
+# ── Model settings ──────────────────────────
+model:
+  # Path to model weights.
+  # Use "yolov8n.pt" for the default COCO pretrained nano model, or point
+  # to your own fine-tuned weights file (e.g. "runs/train/exp/weights/best.pt").
+  weights: "yolov8n.pt"
+  # Minimum confidence score required to keep a detection (0–1)
+  confidence: 0.45
+  # Intersection-over-Union threshold used during NMS (0–1)
+  iou: 0.45
+  # Input image size fed to the model (pixels, square)
+  imgsz: 640
+  # Run inference on this device: "cpu", "0" (first GPU), "cuda:0", etc.
+  device: "0"
+
+# ── Camera / video source settings ──────────
+camera:
+  # Video source:
+  #   - Integer (e.g. 0) → USB webcam index
+  #   - "csi" → use the Jetson Nano CSI camera via GStreamer (see utils.py)
+  #   - File path or RTSP URL string → use that video source
+  source: "csi"
+  # Capture resolution (width × height)
+  width: 1280
+  height: 720
+  # Frames per second (used when source is a CSI camera)
+  fps: 30
+  # Flip method for CSI camera:
+  #   0 = none | 1 = counterclockwise | 2 = rotate-180 | 3 = clockwise
+  #   4 = horiz-flip | 5 = upper-right-diagonal | 6 = vert-flip | 7 = upper-left-diagonal
+  flip_method: 0
+
+# ── Class definitions ────────────────────────
+# Maps class index → human-readable label.
+# Extend this list to match your custom dataset.
+classes:
+  0: "pothole"
+  1: "crack"
+  2: "debris"
+  3: "manhole"
+  4: "bump"
+
+# ── Display settings ─────────────────────────
+display:
+  # Show the live annotated window
+  show: true
+  # Window title
+  window_title: "Road Hazard Detection"
+  # Bounding-box colour per class (BGR)
+  colors:
+    0: [0,   0,   255]   # pothole  – red
+    1: [0, 165,   255]   # crack    – orange
+    2: [0, 255,   255]   # debris   – yellow
+    3: [255, 0,     0]   # manhole  – blue
+    4: [0, 255,     0]   # bump     – green
+
+# ── Output / logging settings ────────────────
+output:
+  # Save annotated frames to a video file (leave empty to disable)
+  save_video: ""
+  # Log detections to a CSV file (leave empty to disable)
+  log_csv: ""
