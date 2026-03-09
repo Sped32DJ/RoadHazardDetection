@@ -6,3 +6,42 @@ We have a Jetson Nano running to detect RoadHazards with an emphasis on Potholes
 trained in a pothole dataset [link to dataset](https://universe.roboflow.com/brad-dwyer/pothole-voxrl/)
 * We trained yolov8n using the above dataset with 100 epochs and downsizing the images to 640
 * Offers 70ms inference time, giving us 14FPS. Sufficient for real time.
+
+## Usage: `yolo.py`
+
+Follow these steps to run inference with the included `yolo.py` script.
+
+- **Install dependencies:** Install `ultralytics` (and its requirements) into your Python environment.
+	```fish
+	python -m pip install --upgrade pip
+	python -m pip install ultralytics
+	```
+
+- **Default model path:** The script defaults to `models/best.pt`. If you trained or placed your model elsewhere, pass it with `--model`.
+
+- **Run the script (provide file argument):**
+	```fish
+	python yolo.py /path/to/image_or_video.mp4
+	```
+
+- **Run and show detections interactively:** Use `--show` to open image/video windows (not recommended on headless devices):
+	```fish
+	python yolo.py /path/to/image_or_video.mp4 --show
+	```
+
+- **Prompt for a file path:** If you run without arguments the script will prompt you:
+	```fish
+	python yolo.py
+	# Enter path to image/video file: /path/to/file
+	```
+
+- **Saved visualizations:** By default the script saves visualized results to `runs/detect/predict` (same behavior as Ultralytics' `.save()`).
+
+- **Example with custom model and showing results:**
+	```fish
+	python yolo.py ~/Downloads/video.mp4 --model runs/detect/train/weights/best.pt --show
+	```
+
+Notes
+- If you are running on a headless Jetson Nano or other server, avoid `--show` and rely on saved outputs.
+- If the environment raises "Import 'ultralytics' could not be resolved", install the package into the active Python environment where you run the script.
