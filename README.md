@@ -11,11 +11,22 @@ trained in a pothole dataset [link to dataset](https://universe.roboflow.com/bra
 
 Follow these steps to run inference with the included `yolo.py` script.
 
+- **Create a virtual environment (recommended):**
+ 	1. Create a venv using Python 3:
+ 	```fish
+ 	python3 -m venv .venv
+ 	```
+ 	2. Activate the venv (fish shell):
+ 	```fish
+ 	source .venv/bin/activate.fish
+ 	```
+ 	(If you use `bash`/`sh` replace the activate command with `source .venv/bin/activate`.)
+
 - **Install dependencies:** Install `ultralytics` (and its requirements) into your Python environment.
-	```fish
-	python -m pip install --upgrade pip
-	python -m pip install ultralytics
-	```
+ 	```fish
+ 	python -m pip install --upgrade pip
+ 	python -m pip install ultralytics
+ 	```
 
 - **Default model path:** The script defaults to `models/best.pt`. If you trained or placed your model elsewhere, pass it with `--model`.
 
