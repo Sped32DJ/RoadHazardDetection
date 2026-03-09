@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 2
+names: ['0', '1']
+
+roboflow:
+  workspace: free-fvunu
+  project: crack-3j7sq
+  version: 12
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/free-fvunu/crack-3j7sq/dataset/12
