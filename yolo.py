@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Run YOLOv8 object detection on an image and print results.
 Usage:
-  python miniYolo.py /path/to/image.jpg
+# Below will run detection on the specified image, print results to stdout, and upload metadata and cropped pothole images to Firestore
+  python miniYolo.py /path/to/image.jpg --firestore
 """
 
 import argparse
