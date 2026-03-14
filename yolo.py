@@ -171,12 +171,12 @@ def resolveLabel(names, classID):
     """Resolve class ID to human-readable label using the model's names list."""
 
     # Handle case where names is a dict and classID is an integer
-    if isinstance(classID, dict):
-        return names.get(int(classID), str(classID))
+    if isinstance(names, dict):
+        return names.get((classID), str(classID))
 
     # Handle case where names is a list and classID is an index
     if isinstance(names, (list, tuple)) and 0 <= classID < len(names):
-        return str(names[int(classID)])
+        return str(names[classID])
     return str(classID)
 
 # Print detection results and optionally upload to Firestore
