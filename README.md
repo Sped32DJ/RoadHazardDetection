@@ -86,3 +86,8 @@ yolo detect train data=Pothole.v1-raw.yolov8/data.yaml epochs=100 imgsz=640
 Notes
 - If you are running on a headless Jetson Nano or other server, avoid `--show` and rely on saved outputs.
 - If the environment raises "Import 'ultralytics' could not be resolved", install the package into the active Python environment where you run the script.
+
+- *** Limitations ***
+* Exif data extraction is exclusive the certain types of media, definitely works with jpg and png files.
+* Inference time for a Jetson in real time is around 55-60ms in our testing of pre-recorded footage. It is quite trivial to power a Jetson in a car, so we decided against it for the time being.
+8
