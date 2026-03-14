@@ -22,32 +22,27 @@ from PIL import Image
 import piexif
 
 def parse_args():
-	p = argparse.ArgumentParser(description="Run YOLO on an image or video file")
-	p.add_argument('source', nargs='?', help='Path to image/video file. If omitted you will be prompted.')
-	p.add_argument('-m', '--model', default='models/best.pt', help='Path to YOLO model file (default: models/best.pt)')
-	p.add_argument('--show', action='store_true', help='Show results (opens image/window)')
-	p.add_argument('--no-save', action='store_true', help='Do not save annotated output files')
-	p.add_argument('--project', default='runs/detect', help='Output base directory (default: runs/detect)')
-	p.add_argument('--name', default='predict', help='Output run name/folder (default: predict)')
-	
-	# Firestore options
-	p.add_argument('--firestore', action='store_true', help='Send detection data to Google Firestore')
-	p.add_argument('--creds', default='firebase-credentials.json', help='Path to Firebase credentials JSON file')
-	p.add_argument('--crop-images', action='store_true', help='Crop and upload detected pothole images to Firestore')
-	p.add_argument('--collection', default='detections', help='Firestore collection name (default: detections)')
-	return p.parse_args()
+    p = argparse.ArgumentParser(description="Run YOLO on an image or video file")
+    p.add_argument('source', nargs='?', help='Path to image/video file. If omitted you will be prompted.')
+    p.add_argument('-m', '--model', default='models/best.pt', help='Path to YOLO model file (default: models/best.pt)')
+    p.add_argument('--show', action='store_true', help='Show results (opens image/window)')
+    p.add_argument('--no-save', action='store_true', help='Do not save annotated output files')
+    p.add_argument('--project', default='runs/detect', help='Output base directory (default: runs/detect)')
+    p.add_argument('--name', default='predict', help='Output run name/folder (default: predict)')
+
+    # Firestore options
+    p.add_argument('--firestore', action='store_true', help='Send detection data to Google Firestore')
+    p.add_argument('--creds', default='firebase-credentials.json', help='Path to Firebase credentials JSON file')
+    p.add_argument('--crop-images', dest='crop_images', action='store_true', default=True, help='Crop and upload detected pothole images to Firestore (default: enabled)')
+    p.add_argument('--no-crop-images', dest='crop_images', action='store_false', help='Disable base64 image upload to Firestore')
+    p.add_argument('--collection', default='detections', help='Firestore collection name (default: detections)')
+    return p.parse_args()
 
 # Function to extract GPS data from EXIF
 def getGPSfromExif(imagePath):
     """Extract GPS coordinates from EXIF data.
     Returns a dict with 'latitude', 'longitude', and 'altitude' (if available), or None if GPS data is not found.
     """
-    #gps_ifd = imagePath.get("GPS")
-    exifDict = piexif.load(imagePath)
-    gps_ifd = exifDict.get("GPS")
-    if not gps_ifd:
-        return None
-
     try:
         exifDict = piexif.load(imagePath)
         gps_ifd = exifDict.get("GPS")
@@ -139,7 +134,7 @@ def imageToBase64(image):
         # Save to bytes buffer and encode as base64
         buffered = BytesIO()
         pil_image.save(buffered, format="JPEG", quality=70)
-        img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
         return img_base64
     except Exception as e:
@@ -211,12 +206,14 @@ def printDetectionResults(results, model, source_file=None, db=None, args=None):
         if source_file and os.path.isfile(source_file):
             # Try to extract GPS data from the source image's EXIF metadatat
             # NOTE: filetype is a limitation here - we can only extract GPS data from image files that support EXIF metadata
-            if(source_file.lower().endswith(('.jpg', '.jpeg', '.png'))):
+            if(source_file.lower().endswith(('.jpg', '.jpeg', '.png', '.tiff', '.heic'))):
                 gps_data = getGPSfromExif(source_file)
                 if gps_data:
                     print(f"  GPS data: {gps_data}")
-                elif source_image is None:
-                    source_image = cv2.imread(source_file)  # Load image with OpenCV if not already loadedv
+
+        # If the model result did not retain the source frame, load it from disk.
+        if source_image is None and source_file and os.path.isfile(source_file):
+            source_image = cv2.imread(source_file)
         
         # Process each detection
         for i in range(len(conf)):
@@ -231,20 +228,42 @@ def printDetectionResults(results, model, source_file=None, db=None, args=None):
                 detectionData = {
                     "timestamp": datetime.now(),
                     "source_file": source_file or 'unknown',
-                    "label": label,
+                    "class_label": label,
                     "class_id": classID,
                     "confidence": float(confidence),
                     "gps": gps_data or None
                 }
 
                 # If cropping is enabled and we have the source image, crop the detected pothole and include it in the upload
-                if args.crop_images and source_image is not None:
-                    cropped_image = crop_pothole(source_image, bbox)
-                    if cropped_image is not None:
-                        img_base64 = imageToBase64(cropped_image)
+
+                if args.crop_images:
+                    encoded_source = None
+                    image_type = None
+
+                    if source_image is not None:
+                        cropped_image = crop_pothole(source_image, bbox)
+                        if cropped_image is not None and cropped_image.size > 0:
+                            encoded_source = cropped_image
+                            image_type = 'crop'
+                        else:
+                            encoded_source = source_image
+                            image_type = 'full_image_fallback'
+
+                    if encoded_source is not None:
+                        img_base64 = imageToBase64(encoded_source)
                         if img_base64:
-                            detectionData['cropped_image'] = img_base64
-                            detectionData['image_size'] = cropped_image.shape[:2]  # (height, width)
+                            h, w = encoded_source.shape[:2]
+                            detectionData['cropped_image_base64'] = img_base64
+                            detectionData['image_base64'] = img_base64
+                            detectionData['image_encoding_type'] = image_type
+                            detectionData['image_size'] = {
+                                'width': int(w),
+                                'height': int(h)
+                            }
+                        else:
+                            print("    Warning: Failed to encode image as base64; uploading metadata only.")
+                    else:
+                        print("    Warning: No source image available for base64 upload; uploading metadata only.")
 
                 doc_id = uploadDetectionToFirestore(db, detectionData, collection=args.collection)
                 if doc_id:
